@@ -1,0 +1,13 @@
+# Binaries and build output
+*.exe
+*.test
+*.out
+bin/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local scratch
+test.go

@@ -1,0 +1,18 @@
+* text=auto
+*.sh text eol=lf
+
+* export-ignore
+/go.mod -export-ignore
+/go.sum -export-ignore
+/README.md -export-ignore
+/LICENSE.txt -export-ignore
+/merchant -export-ignore
+/merchant/** -export-ignore
+/sdk -export-ignore
+/sdk/** -export-ignore
+/terminal -export-ignore
+/terminal/** -export-ignore
+
+/merchant/merchant.go linguist-generated
+/sdk/sdk.go linguist-generated
+/terminal/terminal.go linguist-generated
