@@ -711,6 +711,10 @@ type FilterPaymentsArgs struct {
 	CapturedAt *string `json:"captured_at,omitempty"`
 	// PaymentMethod Filter by payment method name. Examples: 'card', 'promptpay', 'k_plus'
 	PaymentMethod *string `json:"payment_method,omitempty"`
+	// PaymentMethodCategory Filter by payment method category, as configured for each payment method. Returns payments from any payment method in that category. Must match the category exactly, including case. Examples: 'mobile_banking', 'wallet'
+	PaymentMethodCategory *string `json:"payment_method_category,omitempty"`
+	// IssuerId Filter by installment issuer ID, as returned by `list-installment-issuers`. Matches payments made with a card from that issuer, and installment payments whose installment plan is for that issuer. Combine with `payment_method: 'installment'` to return installment payments only. Examples: `bng_1234567890`
+	IssuerId *string `json:"issuer_id,omitempty"`
 	// Currency Filter by currency code. Examples: 'THB', 'USD'. Case-insensitive.
 	Currency *string `json:"currency,omitempty"`
 	// Amount Filter by amount. Supports: exact amount (1000), range (1000..5000), or boundless ranges (1000.. or ..5000). Amounts are in the smallest currency unit (cents for USD).
@@ -773,6 +777,8 @@ type PaymentAttributes struct {
 	CardNetwork *string `json:"card_network,omitempty"`
 	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without a token, or when no name was entered.
 	CardholderName *string `json:"cardholder_name,omitempty"`
+	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without a token, or when no expiration date was captured.
+	CardExpirationDate *string `json:"card_expiration_date,omitempty"`
 	// CreatedAt The creation timestamp (Unix timestamp).
 	CreatedAt float64 `json:"created_at"`
 	// AuthorizedAt When the payment was authorized (Unix timestamp).
@@ -829,6 +835,8 @@ type PaymentAttributes struct {
 	PaymentLinkId *string `json:"payment_link_id,omitempty"`
 	// PaymentSessionId The ID of the payment session associated with this payment, if any.
 	PaymentSessionId *string `json:"payment_session_id,omitempty"`
+	// CheckoutId The ID of the checkout associated with this payment, if any.
+	CheckoutId *string `json:"checkout_id,omitempty"`
 	// InstallmentTerm The number of monthly installments. Null for non-installment payments.
 	InstallmentTerm *float64 `json:"installment_term,omitempty"`
 	// InterestBearer Who bears the installment interest. Null for non-installment payments. one of: "customer", "merchant"
@@ -931,8 +939,16 @@ type FilterTerminalsArgs struct {
 	PerPage *float64 `json:"per_page,omitempty"`
 	// Page Page number for pagination. Default: 1 (first page)
 	Page *float64 `json:"page,omitempty"`
-	// Terms Full-text search across terminal content. Searches terminal name, external ID, and branch name. Uses fuzzy matching for partial text matches.
+	// Name Filter by terminal name (substring, case-insensitive).
+	Name *string `json:"name,omitempty"`
+	// BranchName Filter by terminal branch name (substring, case-insensitive).
+	BranchName *string `json:"branch_name,omitempty"`
+	// Terms Free-text search across terminal name, terminal ID, external ID, and branch name (substring, case-insensitive).
 	Terms *string `json:"terms,omitempty"`
+	// CreatedAt Filter by creation date. Supports: specific date (YYYY-MM-DD), ISO 8601 datetime, date or datetime range (start..end), or keywords (today, yesterday, `this_week`, `last_week`, `this_month`, `last_month`). Calendar boundaries use the merchant provider timezone; a single date or datetime selects that local day, while datetime range endpoints retain their exact times.
+	CreatedAt *string `json:"created_at,omitempty"`
+	// ConnectedAt Filter by connection date. Supports: specific date (YYYY-MM-DD), ISO 8601 datetime, date or datetime range (start..end), or keywords (today, yesterday, `this_week`, `last_week`, `this_month`, `last_month`). Calendar boundaries use the merchant provider timezone; a single date or datetime selects that local day, while datetime range endpoints retain their exact times.
+	ConnectedAt *string `json:"connected_at,omitempty"`
 }
 
 // TerminalAttributes is the "terminal" object definition.
@@ -1290,7 +1306,7 @@ type FindKeyResult struct {
 	// CreatedAt The timestamp of the key creation as a Unix timestamp.
 	CreatedAt float64 `json:"created_at"`
 	// Permissions Permission tokens granted to this key. one of: "authorize_payout", "manage_contacts", "manage_developer_settings", "manage_disputes", "manage_payouts", "manage_plan", "manage_settings", "manage_team", "manage_terminals", "manage_transactions", "view_contacts", "view_disputes", "view_payouts", "view_plan", "view_settings", "view_statements", "view_team", "view_transactions"
-	Permissions []any `json:"permissions"`
+	Permissions []string `json:"permissions"`
 }
 
 // FindPaymentArgs holds the arguments for the find-payment endpoint.
@@ -1328,6 +1344,8 @@ type FindPaymentResult struct {
 	CardNetwork *string `json:"card_network,omitempty"`
 	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without a token, or when no name was entered.
 	CardholderName *string `json:"cardholder_name,omitempty"`
+	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without a token, or when no expiration date was captured.
+	CardExpirationDate *string `json:"card_expiration_date,omitempty"`
 	// CreatedAt The creation timestamp (Unix timestamp).
 	CreatedAt float64 `json:"created_at"`
 	// AuthorizedAt When the payment was authorized (Unix timestamp).
@@ -1384,6 +1402,8 @@ type FindPaymentResult struct {
 	PaymentLinkId *string `json:"payment_link_id,omitempty"`
 	// PaymentSessionId The ID of the payment session associated with this payment, if any.
 	PaymentSessionId *string `json:"payment_session_id,omitempty"`
+	// CheckoutId The ID of the checkout associated with this payment, if any.
+	CheckoutId *string `json:"checkout_id,omitempty"`
 	// InstallmentTerm The number of monthly installments. Null for non-installment payments.
 	InstallmentTerm *float64 `json:"installment_term,omitempty"`
 	// InterestBearer Who bears the installment interest. Null for non-installment payments. one of: "customer", "merchant"
@@ -2161,6 +2181,14 @@ type EmailRecipientAttributes struct {
 	NotificationTopics []NotificationTopicAttributes `json:"notification_topics"`
 }
 
+// ListInstallmentIssuersResult is the result of the list-installment-issuers endpoint.
+type ListInstallmentIssuersResult struct {
+	// IssuerId The ID of the installment issuer. Use it as `issuer_id` with `filter-payments`.
+	IssuerId string `json:"issuer_id"`
+	// DisplayName The display name of the installment issuer, as configured in admin.
+	DisplayName string `json:"display_name"`
+}
+
 // ListInvoicesArgs holds the arguments for the list-invoices endpoint.
 type ListInvoicesArgs struct {
 	// PerPage Number of invoices to return per page (default: 25)
@@ -2218,7 +2246,7 @@ type KeyAttributes struct {
 	// CreatedAt The timestamp of the key creation as a Unix timestamp.
 	CreatedAt float64 `json:"created_at"`
 	// Permissions Permission tokens granted to this key. one of: "authorize_payout", "manage_contacts", "manage_developer_settings", "manage_disputes", "manage_payouts", "manage_plan", "manage_settings", "manage_team", "manage_terminals", "manage_transactions", "view_contacts", "view_disputes", "view_payouts", "view_plan", "view_settings", "view_statements", "view_team", "view_transactions"
-	Permissions []any `json:"permissions"`
+	Permissions []string `json:"permissions"`
 }
 
 // ListMetadataArgs holds the arguments for the list-metadata endpoint.
@@ -2467,7 +2495,7 @@ type PlannedMaintenanceAttributes struct {
 	// ServiceName Name of the service undergoing maintenance, in the requested locale.
 	ServiceName string `json:"service_name"`
 	// AffectedServices Services affected by the maintenance window. one of: "api", "vault", "relay", "wallet", "merchant-dashboard", "website", "developer"
-	AffectedServices []any `json:"affected_services"`
+	AffectedServices []string `json:"affected_services"`
 	// Status Current lifecycle status of the planned maintenance window. one of: "pending", "in_progress", "completed"
 	Status string `json:"status"`
 	// StartAt Scheduled start time as a Unix timestamp.
@@ -2530,7 +2558,7 @@ type PlanAttributes struct {
 	Selectable bool `json:"selectable"`
 	// Rank The ordering of the plan's tier. Selecting a plan whose rank is greater than or equal to the current plan's rank takes effect immediately; selecting a lower rank is scheduled for the start of the next billing month.
 	Rank float64 `json:"rank"`
-	// Skus List of SKUs included in this plan.
+	// Skus List of SKUs the merchant is billed with on this plan. A merchant's custom SKU for this plan's tier replaces the plan SKU with the same `code`, and custom SKUs for codes the plan does not have are included. Empty when the plan has no `id`.
 	Skus []PlanSkuAttributes `json:"skus"`
 }
 
@@ -2579,7 +2607,7 @@ type RoleAttributes struct {
 	// Custom Indicates whether the role is a custom role created by the merchant or a default system role. one of: true, false
 	Custom bool `json:"custom"`
 	// Permissions An array of permissions the role gives. one of: "authorize_payout", "view_team", "view_settings", "view_contacts", "view_transactions", "view_statements", "view_payouts", "view_plan", "view_disputes", "manage_team", "manage_settings", "manage_contacts", "manage_transactions", "manage_payouts", "manage_plan", "manage_developer_settings", "manage_terminals", "manage_disputes"
-	Permissions []any `json:"permissions"`
+	Permissions []string `json:"permissions"`
 }
 
 // ListStatementsArgs holds the arguments for the list-statements endpoint.
@@ -2785,7 +2813,7 @@ type ReconnectWebhookArgs struct {
 	// DestinationUrl The URL where webhook events will be sent. Must be a valid HTTP/HTTPS URL and match the specified protocol.
 	DestinationUrl string `json:"destination_url"`
 	// Events List of events for webhook one of: "PAYMENT_COMPLETED", "PAYMENT_VOIDED", "PAYMENT_REVERSED", "PAYMENT_CANCELLED", "PAYMENT_AUTHORIZED", "PAYMENT_EXPIRED", "PAYOUT_COMPLETED", "TOPUP_SETTLED"
-	Events []any `json:"events"`
+	Events []string `json:"events"`
 }
 
 // RefundPaymentArgs holds the arguments for the refund-payment endpoint.
@@ -2966,6 +2994,10 @@ type RetrieveBrandingResult struct {
 	TileSidebarImage bool `json:"tile_sidebar_image"`
 	// HideLogo Whether to hide the logo completely from the payment interface.
 	HideLogo bool `json:"hide_logo"`
+	// ShopNameFontFamily Font family for the shop name shown when no logo is displayed.
+	ShopNameFontFamily string `json:"shop_name_font_family"`
+	// ShopNameFontVariant Font weight variant for the shop name. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
+	ShopNameFontVariant string `json:"shop_name_font_variant"`
 	// HeadingFontFamily Font family for headings.
 	HeadingFontFamily string `json:"heading_font_family"`
 	// HeadingFontVariant Font weight variant for headings. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
@@ -3019,7 +3051,7 @@ type RetrieveBrandingFontResult struct {
 	// Category The font category that describes the font style and usage. one of: "sans-serif", "serif", "monospace", "display", "handwriting"
 	Category string `json:"category"`
 	// Variants Available font weight variants for this font family. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
-	Variants []any `json:"variants"`
+	Variants []string `json:"variants"`
 }
 
 // RetrieveCheckoutArgs holds the arguments for the retrieve-checkout endpoint.
@@ -3049,6 +3081,8 @@ type RetrieveCheckoutResult struct {
 	CustomerMobile *string `json:"customer_mobile,omitempty"`
 	// CustomerName The name of the customer
 	CustomerName *string `json:"customer_name,omitempty"`
+	// ExternalId The merchant's internal reference for this checkout. Copied onto the payment when the customer pays.
+	ExternalId *string `json:"external_id,omitempty"`
 	// RedirectUrl The URL where the customer will be redirected to make payment
 	RedirectUrl string `json:"redirect_url"`
 	// PaymentId The unique identifier of the payment associated with this checkout. When nil, the payment has not been paid yet.
@@ -3121,7 +3155,7 @@ type CurrentPlanAttributes struct {
 	Selectable bool `json:"selectable"`
 	// Rank The ordering of the plan's tier. Selecting a plan whose rank is greater than or equal to the current plan's rank takes effect immediately; selecting a lower rank is scheduled for the start of the next billing month.
 	Rank float64 `json:"rank"`
-	// Skus List of SKUs included in this plan.
+	// Skus List of SKUs the merchant is billed with on this plan. A merchant's custom SKU for this plan's tier replaces the plan SKU with the same `code`, and custom SKUs for codes the plan does not have are included. Empty when the plan has no `id`.
 	Skus []PlanSkuAttributes `json:"skus"`
 	// PendingPlanId The identifier of the plan a scheduled change will promote to, or `null` when no change is scheduled. Only downgrades are ever scheduled; upgrades are promoted immediately.
 	PendingPlanId *string `json:"pending_plan_id,omitempty"`
@@ -3380,7 +3414,7 @@ type OnboardingAttributes struct {
 	// CategoryCode The merchant category code (MCC) for the business.
 	CategoryCode string `json:"category_code"`
 	// ProductTypes List of product types the merchant will offer. one of: "DIGITAL_GOODS", "PHYSICAL_GOODS", "SERVICES"
-	ProductTypes []any `json:"product_types"`
+	ProductTypes []string `json:"product_types"`
 	// Business Business entity details (only present for business entities).
 	Business map[string]any `json:"business,omitempty"`
 	// Individual Individual entity details (only present for individual entities).
@@ -3766,7 +3800,7 @@ type SetMerchantClassificationArgs struct {
 	// CategoryCode The 4-digit merchant category code (MCC) that best describes your primary business activity.
 	CategoryCode string `json:"category_code"`
 	// ProductTypes List of product/service types you offer. This helps us enable relevant features and apply appropriate policies for your business. You can select multiple types if your business spans different categories. one of: "DIGITAL_GOODS", "PHYSICAL_GOODS", "SERVICES"
-	ProductTypes []any `json:"product_types"`
+	ProductTypes []string `json:"product_types"`
 	// ExpectedMonthlyTransactionAmount The total transaction amount you expect to process each month, in subunits according to ISO 4217. Must be a positive integer greater than 0. E.g., 100000 for 1,000.00 THB. Omit to leave unchanged.
 	ExpectedMonthlyTransactionAmount *float64 `json:"expected_monthly_transaction_amount,omitempty"`
 	// ExpectedMaximumTransactionAmount The largest amount you expect for a single transaction, in subunits according to ISO 4217. Must be a positive integer greater than 0. E.g., 50000 for 500.00 THB. Omit to leave unchanged.
@@ -3807,6 +3841,15 @@ type StartCheckoutArgs struct {
 	// payment flow. Should be a page that can handle both successful and
 	// failed payments. Must be a valid HTTP/HTTPS URL.
 	ReturnUrl string `json:"return_url"`
+	// ExternalId Your unique reference for this checkout, such as an order or invoice number.
+	// It is copied onto the payment when the customer completes checkout, so you
+	// can look up the payment later instead of our payment ID. Must be unique
+	// within this merchant account's payments when the payment is created.
+	// 1–128 characters after trimming leading and trailing whitespace. Must start
+	// with a letter or digit. Remaining characters may be letters, digits, periods
+	// (`.`), underscores (`_`), colons (`:`), slashes (`/`), or hyphens (`-`).
+	// Blank or whitespace-only values are stored as null.
+	ExternalId *string `json:"external_id,omitempty"`
 	// CustomerId Either a Customer ID (starting with `cst_`) or your own external
 	// customer identifier. We'll link this payment to an existing customer
 	// if found, or create a new customer if not. This helps track payment
@@ -3844,6 +3887,8 @@ type StartCheckoutResult struct {
 	CustomerMobile *string `json:"customer_mobile,omitempty"`
 	// CustomerName The name of the customer
 	CustomerName *string `json:"customer_name,omitempty"`
+	// ExternalId The merchant's internal reference for this checkout. Copied onto the payment when the customer pays.
+	ExternalId *string `json:"external_id,omitempty"`
 	// RedirectUrl The URL where the customer will be redirected to make payment
 	RedirectUrl string `json:"redirect_url"`
 	// PaymentId The unique identifier of the payment associated with this checkout. When nil, the payment has not been paid yet.
@@ -3989,6 +4034,10 @@ type UpdateBrandingArgs struct {
 	TileSidebarImage *bool `json:"tile_sidebar_image,omitempty"`
 	// HideLogo Whether to hide the logo completely from the payment interface.
 	HideLogo *bool `json:"hide_logo,omitempty"`
+	// ShopNameFontFamily Font family for the shop name shown when no logo is displayed. Must be a valid Google Font or default font.
+	ShopNameFontFamily *string `json:"shop_name_font_family,omitempty"`
+	// ShopNameFontVariant Font weight variant for the shop name. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
+	ShopNameFontVariant *string `json:"shop_name_font_variant,omitempty"`
 	// HeadingFontFamily Font family for headings. Must be a valid Google Font or default font.
 	HeadingFontFamily *string `json:"heading_font_family,omitempty"`
 	// HeadingFontVariant Font weight variant for headings. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
@@ -5208,15 +5257,15 @@ func (c *Client) FilterPaymentLinks(args ...FilterPaymentLinksArgs) (*FilterPaym
 // Returns a paginated list of payments for the authenticated merchant with advanced filtering capabilities.
 //
 // This endpoint provides comprehensive search functionality using the SearchIndex infrastructure,
-// allowing you to filter payments by various criteria including status, payment method, currency,
-// amount ranges, terminal, and date ranges.
+// allowing you to filter payments by various criteria including status, payment method, payment method category,
+// installment issuer, currency, amount ranges, terminal, and date ranges.
 //
 // The response includes pagination controls with `previous` and `next` cursors that can be used
 // to navigate through the payment history efficiently.
 //
 // ### Features:
 // - **Full-text search**: Search across payment content
-// - **Advanced filtering**: Filter by status, payment method, currency, amount, contact, terminal, dates, and fraud finding
+// - **Advanced filtering**: Filter by status, payment method, payment method category, installment issuer, currency, amount, contact, terminal, dates, and fraud finding
 // - **Contact filtering**: Filter by contact internal ID or external ID
 // - **Date range support**: Support for specific dates, datetimes, date ranges, datetime ranges, and keywords
 // - **Pagination**: Efficient cursor-based pagination
@@ -5284,12 +5333,12 @@ func (c *Client) FilterPayouts(args ...FilterPayoutsArgs) (*FilterPayoutsPage, e
 	return &FilterPayoutsPage{raw: page}, nil
 }
 
-// ## Filter Terminals
+// ## Filter terminals
 //
-// Returns a paginated list of terminals for the authenticated merchant with search capabilities.
+// Returns a paginated list of terminals for the authenticated merchant with filtering capabilities.
 //
-// This endpoint provides full-text search functionality using the SearchIndex infrastructure,
-// allowing you to search terminals by name, external ID, and branch name.
+// Filter by terminal name, branch name (substring match), creation date, and connection date. Free-text
+// `terms` matches terminal name, terminal ID, external ID, and branch name. Results are ordered by creation date descending.
 //
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
 // args is optional - pass zero or one FilterTerminalsArgs{...}.
@@ -6222,6 +6271,27 @@ func (c *Client) ListInstallations() ([]InstallationAttributes, error) {
 	return result, nil
 }
 
+// ## List installment issuers
+//
+// Returns the card issuers the authenticated merchant can take installment payments with, sorted by display name.
+//
+// Use an issuer's `issuer_id` with `filter-payments` to list the payments made with cards from that issuer.
+//
+// Returns an empty array when the merchant does not offer installments.
+//
+// May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
+func (c *Client) ListInstallmentIssuers() ([]ListInstallmentIssuersResult, error) {
+	raw, err := c.raw.Call("list-installment-issuers", nil)
+	if err != nil {
+		return nil, err
+	}
+	var result []ListInstallmentIssuersResult
+	if err := decodeResult(raw, &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // ## List invoices
 //
 // Returns a paginated list of invoices for the authenticated merchant.
@@ -6584,7 +6654,7 @@ func (c *Client) ListPayoutsByContact(args ListPayoutsByContactArgs) (*ListPayou
 // ## List all permissions
 //
 // Retrieves a list of all permissions available for roles within the merchant account.
-// These permissions can be assigned to custom roles created by the merchant.
+// These permissions can be assigned to custom roles created by the merchant, and to API keys.
 //
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
 func (c *Client) ListPermissions() ([]string, error) {
@@ -6629,6 +6699,8 @@ func (c *Client) ListPlannedMaintenances(args ...ListPlannedMaintenancesArgs) ([
 // Retrieve a list of all current plans available for the merchant.
 // Plans represent different levels of service or pricing plans currently available.
 // The `selectable` flag indicates if a plan can be subscribed to via self-service.
+//
+// `skus` lists the SKUs the merchant would be billed with on each plan, including the merchant's custom SKUs for the plan's tier.
 //
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
 func (c *Client) ListPlans() ([]PlanAttributes, error) {
@@ -7513,6 +7585,8 @@ func (c *Client) RetrieveContact(args RetrieveContactArgs) (RetrieveContactResul
 //
 // The response includes information about the plan's tier, which indicates the level of service provided.
 // It also reports `pending_plan_id`, the plan a scheduled change will promote to, or `null` when no change is scheduled.
+//
+// `skus` lists the SKUs the merchant is billed with, including the merchant's custom SKUs for the plan's tier.
 //
 // May return *webfunction.BadRequestError with code "NO_PLAN_SELECTED" - The merchant is not currently subscribed to any plan. A plan must be subscribed to via the `select-plan` endpoint first.
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
