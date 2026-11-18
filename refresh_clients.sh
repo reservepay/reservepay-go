@@ -15,6 +15,10 @@ fi
 
 mkdir -p merchant terminal sdk
 
+# Set the copyright year in the license to the current year
+sed "s/^Copyright (c) [0-9]\{4\}/Copyright (c) $(date +%Y)/" LICENSE.txt > LICENSE.txt.tmp
+mv LICENSE.txt.tmp LICENSE.txt
+
 # Generate code for clients (each API is its own Go package)
 "$WFN" codegen --target go --url https://api.reservepay.com/merchants -o ./merchant/merchant.go --namespace merchant
 "$WFN" codegen --target go --url https://api.reservepay.com/terminals -o ./terminal/terminal.go --namespace terminal
