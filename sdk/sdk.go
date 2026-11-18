@@ -223,6 +223,10 @@ type RetrieveInstallationSettingsResult struct {
 	TileSidebarImage bool `json:"tile_sidebar_image"`
 	// HideLogo Whether to hide the logo completely from the payment interface.
 	HideLogo bool `json:"hide_logo"`
+	// ShopNameFontFamily Font family for the shop name shown when no logo is displayed.
+	ShopNameFontFamily string `json:"shop_name_font_family"`
+	// ShopNameFontVariant Font weight variant for the shop name. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
+	ShopNameFontVariant string `json:"shop_name_font_variant"`
 	// HeadingFontFamily Font family for headings.
 	HeadingFontFamily string `json:"heading_font_family"`
 	// HeadingFontVariant Font weight variant for headings. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
@@ -285,6 +289,8 @@ type RetrievePaymentSessionResult struct {
 	PaymentMethod string `json:"payment_method"`
 	// PaymentMethodDisplayName The display name of the payment method.
 	PaymentMethodDisplayName string `json:"payment_method_display_name"`
+	// CardFirstDigits The first 6 digits of the card number. Null for non-card payment methods or card sessions without a token.
+	CardFirstDigits *string `json:"card_first_digits,omitempty"`
 	// CardLastDigits The last 2 digits of the card number. Null for non-card payment methods or card sessions without a token.
 	CardLastDigits *string `json:"card_last_digits,omitempty"`
 	// CardNetwork The card network, such as visa or mastercard. Null for non-card payment methods or card sessions without a token.

@@ -57,6 +57,16 @@ type ConnectDeviceByCodeArgs struct {
 	DeviceId string `json:"device_id"`
 }
 
+// ConnectDeviceByCodeResult is the result of the connect-device-by-code endpoint.
+type ConnectDeviceByCodeResult struct {
+	// MerchantId The merchant ID this terminal belongs to.
+	MerchantId string `json:"merchant_id"`
+	// TerminalId Terminal ID (`trm_…`) the device is connected to.
+	TerminalId string `json:"terminal_id"`
+	// Key API key token for this device, prefixed with `reservepay_`.
+	Key string `json:"key"`
+}
+
 // RetrieveInstallationSettingsArgs holds the arguments for the retrieve-installation-settings endpoint.
 type RetrieveInstallationSettingsArgs struct {
 	// MerchantId The merchant ID this terminal belongs to.
@@ -127,6 +137,10 @@ type RetrieveInstallationSettingsResult struct {
 	TileSidebarImage bool `json:"tile_sidebar_image"`
 	// HideLogo Whether to hide the logo completely from the payment interface.
 	HideLogo bool `json:"hide_logo"`
+	// ShopNameFontFamily Font family for the shop name shown when no logo is displayed.
+	ShopNameFontFamily string `json:"shop_name_font_family"`
+	// ShopNameFontVariant Font weight variant for the shop name. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
+	ShopNameFontVariant string `json:"shop_name_font_variant"`
 	// HeadingFontFamily Font family for headings.
 	HeadingFontFamily string `json:"heading_font_family"`
 	// HeadingFontVariant Font weight variant for headings. one of: "Thin", "ExtraLight", "Light", "Regular", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"
@@ -250,8 +264,9 @@ func (c *Client) ConnectDevice(args ConnectDeviceArgs) (string, error) {
 // ## Connect a device with a temporary challenge
 //
 // Connect a device to the terminal that owns the given 8-digit temporary challenge.
-// The code must be unexpired. On success the device is bound, a fresh API key token
-// (prefixed with `reservepay_`) is returned, and the temporary challenge is cleared.
+// The code must be unexpired. On success the device is bound, the temporary challenge
+// is cleared, and the response holds the merchant ID, the terminal ID and a fresh API
+// key token (prefixed with `reservepay_`).
 //
 // If the terminal is already bound to a different device, `ALREADY_CONNECTED` is returned.
 // If it is bound to the same device, the previous key is revoked and a new one is issued.
@@ -265,18 +280,18 @@ func (c *Client) ConnectDevice(args ConnectDeviceArgs) (string, error) {
 // May return *webfunction.BadRequestError with code "NOT_ENABLED" - The terminal exists but is disabled; enable it before connecting a device.
 // May return *webfunction.BadRequestError with code "NOT_CONFIGURED" - The terminal has no installation linked; assign an installation first.
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
-func (c *Client) ConnectDeviceByCode(args ConnectDeviceByCodeArgs) (string, error) {
+func (c *Client) ConnectDeviceByCode(args ConnectDeviceByCodeArgs) (ConnectDeviceByCodeResult, error) {
 	argsMap, err := toArgsMap(args)
 	if err != nil {
-		return "", err
+		return ConnectDeviceByCodeResult{}, err
 	}
 	raw, err := c.raw.Call("connect-device-by-code", argsMap)
 	if err != nil {
-		return "", err
+		return ConnectDeviceByCodeResult{}, err
 	}
-	var result string
+	var result ConnectDeviceByCodeResult
 	if err := decodeResult(raw, &result); err != nil {
-		return "", err
+		return ConnectDeviceByCodeResult{}, err
 	}
 	return result, nil
 }
