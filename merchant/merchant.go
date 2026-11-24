@@ -4505,9 +4505,9 @@ func (c *Client) AddContact(args ...AddContactArgs) (string, error) {
 // Add a key person to your business merchant account. Key people are individuals
 // who have significant control or influence over your business, such as:
 //
-// - Ultimate Beneficial Owners (UBOs) who own 25% or more of the business
-// - Authorized Signatories who can legally represent and make decisions for
-//   the business
+//   - Ultimate Beneficial Owners (UBOs) who own 25% or more of the business
+//   - Authorized Signatories who can legally represent and make decisions for
+//     the business
 //
 // This endpoint is only available for business merchants, not
 // individual merchants.
@@ -4515,9 +4515,9 @@ func (c *Client) AddContact(args ...AddContactArgs) (string, error) {
 // You'll need to provide basic information about the person as well as their
 // identification documents:
 //
-// - For local nationals (nationality matches merchant's country): National ID
-//   details are required
-// - For foreign nationals: Passport details are required
+//   - For local nationals (nationality matches merchant's country): National ID
+//     details are required
+//   - For foreign nationals: Passport details are required
 //
 // The endpoint returns a unique identifier for the key person that can be used to
 // reference them in other API calls.
@@ -5949,11 +5949,11 @@ func (c *Client) GetBalance() (GetBalanceResult, error) {
 //
 // The payment flow typically involves:
 //
-// 1. Your customer selecting a payment method in the SDK
-// 2. You initiating the payment with the session ID from step 1
-// 3. The customer completing the payment via their selected payment method
-// 4. Our system notifying you of the final payment status via webhook, or you
-//    polling the status of the payment
+//  1. Your customer selecting a payment method in the SDK
+//  2. You initiating the payment with the session ID from step 1
+//  3. The customer completing the payment via their selected payment method
+//  4. Our system notifying you of the final payment status via webhook, or you
+//     polling the status of the payment
 //
 // The payment ID returned by this endpoint can be used to track the payment status
 // and details.
@@ -8094,14 +8094,14 @@ func (c *Client) SendPayout(args SendPayoutArgs) (string, error) {
 // to use an existing contact. Without it, the contact is matched by `recipient_email` or `recipient_mobile`,
 // or created when none matches.
 //
-// - **Bank account**: Omit the bank fields to use the contact's primary bank account,
-//   or include `bank_account_id` to specify a particular account. To create a new bank account
-//   on the contact, omit `bank_account_id` and provide `bank_account_number`, `bank_account_name`,
-//   `bank_code`, and `country_code` instead. The two approaches are mutually exclusive.
-//   A newly created contact has no bank account, so provide the bank details.
-// - **Mobile number (PromptPay)**: Set `payout_method` to `mobile_number` and provide `mobile_number`.
-//   Accepts local format (e.g. `0812223333`) or E.164 (e.g. `+66812223333`).
-// - **National ID (PromptPay)**: Set `payout_method` to `national_id` and provide `national_id` (13 digits).
+//   - **Bank account**: Omit the bank fields to use the contact's primary bank account,
+//     or include `bank_account_id` to specify a particular account. To create a new bank account
+//     on the contact, omit `bank_account_id` and provide `bank_account_number`, `bank_account_name`,
+//     `bank_code`, and `country_code` instead. The two approaches are mutually exclusive.
+//     A newly created contact has no bank account, so provide the bank details.
+//   - **Mobile number (PromptPay)**: Set `payout_method` to `mobile_number` and provide `mobile_number`.
+//     Accepts local format (e.g. `0812223333`) or E.164 (e.g. `+66812223333`).
+//   - **National ID (PromptPay)**: Set `payout_method` to `national_id` and provide `national_id` (13 digits).
 //
 // When using a bank account, it must belong to the contact and be active (not soft-deleted).
 //
@@ -8788,9 +8788,9 @@ func (c *Client) UpdateKey(args UpdateKeyArgs) (bool, error) {
 // Update details of a key person in your business merchant account. Key people are individuals
 // who have significant control or influence over your business, such as:
 //
-// - Ultimate Beneficial Owners (UBOs) who own 25% or more of the business
-// - Authorized Signatories who can legally represent and make decisions for
-//   the business
+//   - Ultimate Beneficial Owners (UBOs) who own 25% or more of the business
+//   - Authorized Signatories who can legally represent and make decisions for
+//     the business
 //
 // This endpoint is only available for business merchants, not
 // individual merchants.

@@ -797,10 +797,10 @@ func (c *Client) RetrieveQrData(args RetrieveQrDataArgs) (string, error) {
 //
 // The flow after calling this endpoint depends on the selected payment method:
 //
-// - For card payments: You must provide a card token obtained from `tokenize-card`, or a
-//   saved card's token right after `rehydrate-card`
-// - For QR code payments: Call `retrieve-qr-data` to get the QR code data to display
-// - For redirect-based payments: Call `get-redirect-url` to get the URL to redirect the customer to
+//   - For card payments: You must provide a card token obtained from `tokenize-card`, or a
+//     saved card's token right after `rehydrate-card`
+//   - For QR code payments: Call `retrieve-qr-data` to get the QR code data to display
+//   - For redirect-based payments: Call `get-redirect-url` to get the URL to redirect the customer to
 //
 // Card installments:
 //
