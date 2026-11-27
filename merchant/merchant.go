@@ -767,17 +767,17 @@ type PaymentAttributes struct {
 	PaymentMethodCategory string `json:"payment_method_category"`
 	// PaymentMethodDisplayName The display name of the payment method.
 	PaymentMethodDisplayName string `json:"payment_method_display_name"`
-	// CardFirstDigits The first 6 digits of the card number. Null for non-card payment methods or card payments without a token.
+	// CardFirstDigits The first 6 digits of the card number. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardFirstDigits *string `json:"card_first_digits,omitempty"`
-	// CardLastDigits The last 2 digits of the card number. Null for non-card payment methods or card payments without a token.
+	// CardLastDigits The last 2 digits of the card number. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardLastDigits *string `json:"card_last_digits,omitempty"`
-	// CardMaskedNumber The card number with the first 6 and last 2 digits visible and the rest masked. Null for non-card payment methods or card payments without a token.
+	// CardMaskedNumber The card number with the first 6 and last 2 digits visible and the rest masked. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardMaskedNumber *string `json:"card_masked_number,omitempty"`
-	// CardNetwork The card network, such as visa or mastercard. Null for non-card payment methods or card payments without a token.
+	// CardNetwork The card network, such as visa or mastercard. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardNetwork *string `json:"card_network,omitempty"`
-	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without a token, or when no name was entered.
+	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without card details, or when no name was entered. Always null for EDC payments, as the partner app only reports the card number digits.
 	CardholderName *string `json:"cardholder_name,omitempty"`
-	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without a token, or when no expiration date was captured.
+	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without card details, or when no expiration date was captured. Always null for EDC payments, as the partner app only reports the card number digits.
 	CardExpirationDate *string `json:"card_expiration_date,omitempty"`
 	// CreatedAt The creation timestamp (Unix timestamp).
 	CreatedAt float64 `json:"created_at"`
@@ -875,6 +875,8 @@ type FilterPayoutsArgs struct {
 	BankCode *string `json:"bank_code,omitempty"`
 	// ContactId Filter by contact ID. Accepts either internal UID (starting with `ctc_` ) or external ID. Examples: `ctc_1234567890` or `ext_1234567890`
 	ContactId *string `json:"contact_id,omitempty"`
+	// BatchId Filter by the payout batch that created the payout. Example: `bat_1234567890`
+	BatchId *string `json:"batch_id,omitempty"`
 	// Terms Full-text search across payout content. Searches payout method names. Uses fuzzy matching for partial text matches.
 	Terms *string `json:"terms,omitempty"`
 }
@@ -1067,7 +1069,7 @@ type FindBatchResult struct {
 	BatchId string `json:"batch_id"`
 	// Type The type of records in this batch. one of: "PAYMENT_LINK", "PAYOUT"
 	Type string `json:"type"`
-	// Status The current processing status of the batch. one of: "CREATED", "PREPARING", "PREPARED", "PROCESSING", "COMPLETED"
+	// Status The current processing status of the batch. one of: "CREATED", "PREPARING", "PREPARED", "PROCESSING", "COMPLETED", "FAILED"
 	Status string `json:"status"`
 	// OutputUrl The URL to download the result xlsx file. Present when the batch has completed.
 	OutputUrl *string `json:"output_url,omitempty"`
@@ -1077,6 +1079,8 @@ type FindBatchResult struct {
 	ErrorMessage *string `json:"error_message,omitempty"`
 	// CreatedAt The timestamp when the batch was created.
 	CreatedAt float64 `json:"created_at"`
+	// AwaitingAuthorization True when any payout in this batch is still in the requested state.
+	AwaitingAuthorization bool `json:"awaiting_authorization"`
 }
 
 // FindCardArgs holds the arguments for the find-card endpoint.
@@ -1211,8 +1215,12 @@ type FindDisputeResult struct {
 	Fees []FeeAttributes `json:"fees"`
 	// Conceded Whether the dispute has been conceded by the merchant. This can be true only when the dispute is in the LOST state. one of: true, false
 	Conceded bool `json:"conceded"`
+	// ChallengeFeeWaived Whether the challenge fee is waived for this dispute. one of: true, false
+	ChallengeFeeWaived bool `json:"challenge_fee_waived"`
 	// Evidences The evidence submitted for this dispute.
 	Evidences []DisputeEvidenceAttributes `json:"evidences"`
+	// Entries The merchant ledger entries associated with this dispute.
+	Entries []EntryAttributes `json:"entries"`
 }
 
 // FindInstallationArgs holds the arguments for the find-installation endpoint.
@@ -1334,17 +1342,17 @@ type FindPaymentResult struct {
 	PaymentMethodCategory string `json:"payment_method_category"`
 	// PaymentMethodDisplayName The display name of the payment method.
 	PaymentMethodDisplayName string `json:"payment_method_display_name"`
-	// CardFirstDigits The first 6 digits of the card number. Null for non-card payment methods or card payments without a token.
+	// CardFirstDigits The first 6 digits of the card number. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardFirstDigits *string `json:"card_first_digits,omitempty"`
-	// CardLastDigits The last 2 digits of the card number. Null for non-card payment methods or card payments without a token.
+	// CardLastDigits The last 2 digits of the card number. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardLastDigits *string `json:"card_last_digits,omitempty"`
-	// CardMaskedNumber The card number with the first 6 and last 2 digits visible and the rest masked. Null for non-card payment methods or card payments without a token.
+	// CardMaskedNumber The card number with the first 6 and last 2 digits visible and the rest masked. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardMaskedNumber *string `json:"card_masked_number,omitempty"`
-	// CardNetwork The card network, such as visa or mastercard. Null for non-card payment methods or card payments without a token.
+	// CardNetwork The card network, such as visa or mastercard. Includes EDC payments, using the card the partner app reports at capture. Null for non-card payment methods or card payments without card details, such as an EDC payment before capture.
 	CardNetwork *string `json:"card_network,omitempty"`
-	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without a token, or when no name was entered.
+	// CardholderName The cardholder's name as entered on the card. Null for non-card payment methods, card payments without card details, or when no name was entered. Always null for EDC payments, as the partner app only reports the card number digits.
 	CardholderName *string `json:"cardholder_name,omitempty"`
-	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without a token, or when no expiration date was captured.
+	// CardExpirationDate The card's expiration date as captured, usually in MM/YY format. Null for non-card payment methods, card payments without card details, or when no expiration date was captured. Always null for EDC payments, as the partner app only reports the card number digits.
 	CardExpirationDate *string `json:"card_expiration_date,omitempty"`
 	// CreatedAt The creation timestamp (Unix timestamp).
 	CreatedAt float64 `json:"created_at"`
@@ -2043,7 +2051,7 @@ type ApiRequestLogAttributes struct {
 
 // ListBatchesArgs holds the arguments for the list-batches endpoint.
 type ListBatchesArgs struct {
-	// Type Filter by batch type. When omitted, all batch types are returned. one of: "PAYMENT_LINK", "PAYOUT"
+	// Type Filter by batch type. When omitted, every batch type the caller can read is returned. one of: "PAYMENT_LINK", "PAYOUT"
 	Type *string `json:"type,omitempty"`
 	// PerPage Number of batches to return per page (default: 25)
 	PerPage *float64 `json:"per_page,omitempty"`
@@ -2059,7 +2067,7 @@ type BatchAttributes struct {
 	BatchId string `json:"batch_id"`
 	// Type The type of records in this batch. one of: "PAYMENT_LINK", "PAYOUT"
 	Type string `json:"type"`
-	// Status The current processing status of the batch. one of: "CREATED", "PREPARING", "PREPARED", "PROCESSING", "COMPLETED"
+	// Status The current processing status of the batch. one of: "CREATED", "PREPARING", "PREPARED", "PROCESSING", "COMPLETED", "FAILED"
 	Status string `json:"status"`
 	// OutputUrl The URL to download the result xlsx file. Present when the batch has completed.
 	OutputUrl *string `json:"output_url,omitempty"`
@@ -2069,6 +2077,8 @@ type BatchAttributes struct {
 	ErrorMessage *string `json:"error_message,omitempty"`
 	// CreatedAt The timestamp when the batch was created.
 	CreatedAt float64 `json:"created_at"`
+	// AwaitingAuthorization True when any payout in this batch is still in the requested state.
+	AwaitingAuthorization bool `json:"awaiting_authorization"`
 }
 
 // CommunicationChannelAttributes is the "communication_channel" object definition.
@@ -2143,8 +2153,12 @@ type DisputeAttributes struct {
 	Fees []FeeAttributes `json:"fees"`
 	// Conceded Whether the dispute has been conceded by the merchant. This can be true only when the dispute is in the LOST state. one of: true, false
 	Conceded bool `json:"conceded"`
+	// ChallengeFeeWaived Whether the challenge fee is waived for this dispute. one of: true, false
+	ChallengeFeeWaived bool `json:"challenge_fee_waived"`
 	// Evidences The evidence submitted for this dispute.
 	Evidences []DisputeEvidenceAttributes `json:"evidences"`
+	// Entries The merchant ledger entries associated with this dispute.
+	Entries []EntryAttributes `json:"entries"`
 }
 
 // ListDisputesByPaymentArgs holds the arguments for the list-disputes-by-payment endpoint.
@@ -4762,14 +4776,17 @@ func (c *Client) BalanceHistory(args ...BalanceHistoryArgs) (*BalanceHistoryPage
 //
 // Cancels a payment that should not go through. The customer is not charged for a cancelled payment.
 //
-// Payments in a `PENDING` status, and payments in a `SUCCESSFUL` status that have not been
-// settled yet, can be cancelled. Once a payment is cancelled, its status changes to `CANCELLED`.
+// Payments in a `PENDING` status, payments in an `AUTHORIZED` status whose authorization has not
+// expired yet, and payments in a `SUCCESSFUL` status that have not been settled yet, can be
+// cancelled. Cancelling an `AUTHORIZED` payment releases the hold on the customer's funds. Once a
+// payment is cancelled, its status changes to `CANCELLED`.
 //
 // May return *webfunction.BadRequestError with code "NOT_FOUND" - This error occurs when no payment with the provided ID exists in your
 // merchant account. Double check that you're using the correct payment ID.
 // May return *webfunction.BadRequestError with code "NOT_CANCELLABLE" - Payment is not eligible for cancellation. This can happen if the payment is
-// not in a `PENDING` or `SUCCESSFUL` status, has already been settled, or its
-// payment method does not support cancellations.
+// not in a `PENDING`, `AUTHORIZED` or `SUCCESSFUL` status, its authorization has
+// expired, it has already been settled, or its payment method does not support
+// cancellations.
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
 func (c *Client) CancelPayment(args CancelPaymentArgs) (bool, error) {
 	argsMap, err := toArgsMap(args)
@@ -5299,14 +5316,14 @@ func (c *Client) FilterPayments(args ...FilterPaymentsArgs) (*FilterPaymentsPage
 //
 // This endpoint provides comprehensive search functionality using the SearchIndex infrastructure,
 // allowing you to filter payouts by various criteria including status, payout method, currency,
-// amount ranges, and date ranges.
+// batch, amount ranges, and date ranges.
 //
 // The response includes pagination controls with `previous` and `next` cursors that can be used
 // to navigate through the payout history efficiently.
 //
 // ### Features:
 // - **Full-text search**: Search across payout content
-// - **Advanced filtering**: Filter by status, payout method, currency, amount, and dates
+// - **Advanced filtering**: Filter by status, payout method, currency, batch, amount, and dates
 // - **Date range support**: Support for specific dates, datetimes, date ranges, datetime ranges, and keywords
 // - **Pagination**: Efficient cursor-based pagination
 // - **Merchant-scoped**: Only returns payouts for the authenticated merchant
@@ -5433,7 +5450,7 @@ func (c *Client) FindBankAccount(args FindBankAccountArgs) (FindBankAccountResul
 //
 // Retrieve a batch by ID, including its current status, any prepare or processing error,
 // the preview download URL when prepare has completed, and the result download URL when
-// processing has completed.
+// processing has completed. `awaiting_authorization` is true when any payout in the batch is still requested.
 //
 // May return *webfunction.BadRequestError with code "NOT_FOUND" - The batch was not found.
 // May also return *webfunction.UnexpectedStatusCodeError (non-200/400 response) or *webfunction.JsonParseError (invalid JSON body).
@@ -6095,6 +6112,8 @@ func (c *Client) ListApiRequestLogs(args ...ListApiRequestLogsArgs) (*ListApiReq
 // ## List batches
 //
 // Returns a paginated list of batches for the authenticated merchant, newest first.
+// A caller only receives batch types their permissions allow.
+// `awaiting_authorization` is true when any payout in the batch is still requested.
 //
 // Optionally filter by `type` to return only batches of that kind (for example `PAYMENT_LINK`).
 //
